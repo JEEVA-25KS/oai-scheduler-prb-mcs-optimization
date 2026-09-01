@@ -153,7 +153,8 @@ After build, run the core and gnb as always.
 
 - **Dynamic PRBs, two UEs, one gNB**: baseline speedtest at server and both clients
 - **Static PRBs (UE1 = 25 PRBs, UE2 = 55 PRBs)**: speedtest at server and both clients
-<img width="1328" height="354" alt="image" src="https://github.com/user-attachments/assets/76c07027-f45e-4513-892f-c97aba3df4ae" />
+
+<img width="1328" height="357" alt="image" src="https://github.com/user-attachments/assets/fb26eeeb-af89-4d14-a3f6-af6fd974f9bc" />
 
 
 **Conclusion**: static PRB allocation in the OAI uplink scheduler effectively isolates
