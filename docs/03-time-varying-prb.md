@@ -173,7 +173,7 @@ changing every 20 seconds. Under this varying configuration, **~30 Mbps** throug
 was observed at both UEs. Detailed gNB logs confirmed PRBs actually varying over
 time as configured.
 
-<img width="1133" height="787" alt="image" src="https://github.com/user-attachments/assets/82b4bf2d-eb0c-4150-9109-0954b8445d6b" />
+<img width="1130" height="782" alt="image" src="https://github.com/user-attachments/assets/52537f43-c6d5-496b-bafa-0457d770088a" />
 
 
 ## Observations and uncertainties
