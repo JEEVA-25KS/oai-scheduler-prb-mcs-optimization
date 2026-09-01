@@ -1,0 +1,166 @@
+
+<style>
+  .wrap { padding: 0.75rem 0; font-family: var(--font-sans); color: var(--color-text-primary); }
+  .thresh-row { display: flex; align-items: center; gap: 10px; margin-bottom: 0.75rem; }
+  .thresh-row label { font-size: 12px; color: var(--color-text-secondary); white-space: nowrap; }
+  .thresh-row input { flex: 1; }
+  .thresh-row .val { font-size: 12px; font-weight: 500; min-width: 40px; }
+  .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 0.75rem; }
+  .ctrl-col { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px; }
+  .ctrl-col h3 { font-size: 12px; font-weight: 500; margin: 0 0 8px; }
+  .ctrl-group { display: flex; flex-direction: column; gap: 2px; margin-bottom: 7px; }
+  .ctrl-group label { font-size: 11px; color: var(--color-text-secondary); }
+  .ctrl-group .val { font-size: 11px; font-weight: 500; }
+  .scene { display: flex; gap: 1rem; justify-content: center; margin: 0.5rem 0; }
+  .bucket-col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .bucket-title { font-size: 12px; font-weight: 500; }
+  .mode-badge { display: inline-block; padding: 2px 8px; border-radius: var(--border-radius-md); font-size: 11px; font-weight: 500; }
+  .mode-active { background: var(--color-background-danger); color: var(--color-text-danger); }
+  .mode-inactive { background: var(--color-background-success); color: var(--color-text-success); }
+  .stats { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 6px; margin: 0.5rem 0; }
+  .stat { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 7px; text-align: center; }
+  .stat-label { font-size: 10px; color: var(--color-text-secondary); margin-bottom: 2px; }
+  .stat-val { font-size: 13px; font-weight: 500; }
+  .mode-explain { font-size: 12px; color: var(--color-text-secondary); background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 8px 12px; margin-top: 0.5rem; line-height: 1.5; }
+  .mode-explain span { font-weight: 500; color: var(--color-text-primary); }
+</style>
+<div class="wrap">
+
+  <div class="thresh-row">
+    <label>Threshold (MB)</label>
+    <input type="range" min="1" max="20" step="1" value="7" id="thresh">
+    <span class="val"><span id="thresh-val">7</span> MB</span>
+  </div>
+
+  <div class="controls">
+    <div class="ctrl-col">
+      <h3 style="color:#185FA5;">UE1 — 25 PRBs baseline</h3>
+      <div class="ctrl-group">
+        <label>iperf (Mbps)</label>
+        <input type="range" min="0" max="100" step="1" value="0" id="iperf1">
+        <span class="val"><span id="iperf1-val">0</span> Mbps in</span>
+      </div>
+      <div class="ctrl-group">
+        <label>Drain (Mbps)</label>
+        <input type="range" min="5" max="50" step="1" value="15" id="drain1">
+        <span class="val"><span id="drain1-val">15</span> Mbps out</span>
+      </div>
+    </div>
+    <div class="ctrl-col">
+      <h3 style="color:#3B6D11;">UE2 — 55 PRBs baseline</h3>
+      <div class="ctrl-group">
+        <label>iperf (Mbps)</label>
+        <input type="range" min="0" max="100" step="1" value="30" id="iperf2">
+        <span class="val"><span id="iperf2-val">30</span> Mbps in</span>
+      </div>
+      <div class="ctrl-group">
+        <label>Drain (Mbps)</label>
+        <input type="range" min="5" max="60" step="1" value="20" id="drain2">
+        <span class="val"><span id="drain2-val">20</span> Mbps out</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="scene">
+    <div class="bucket-col">
+      <div class="bucket-title" style="color:#185FA5;">UE1 buffer</div>
+      <svg id="svg1" width="130" height="260" viewBox="0 0 130 260"></svg>
+      <div id="badge1" class="mode-badge mode-inactive">mode 0</div>
+    </div>
+    <div class="bucket-col">
+      <div class="bucket-title" style="color:#3B6D11;">UE2 buffer</div>
+      <svg id="svg2" width="130" height="260" viewBox="0 0 130 260"></svg>
+      <div id="badge2" class="mode-badge mode-inactive">mode 0</div>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-label">UE1 net fill</div><div class="stat-val" id="net1">—</div></div>
+    <div class="stat"><div class="stat-label">UE1 → threshold</div><div class="stat-val" id="time1">—</div></div>
+    <div class="stat"><div class="stat-label">UE2 net fill</div><div class="stat-val" id="net2">—</div></div>
+    <div class="stat"><div class="stat-label">UE2 → threshold</div><div class="stat-val" id="time2">—</div></div>
+  </div>
+
+  <div id="mode-explain" class="mode-explain"></div>
+
+</div>
+
+<script>
+const ue1Color='#FF6B6B', ue2Color='#FF6B6', threshColor='#E24B4A';
+function mb(mbps){return mbps*1e6/8;}
+
+function drawBucket(svgEl, iperf, drain, threshMB, color){
+  const bx=22,bTop=30,bBot=160,bW=80,bH=bBot-bTop;
+  const thr=threshMB*1e6, net=mb(Math.max(0,iperf-drain));
+  const buf5=net*5, maxV=thr*1.4;
+  const fillR=Math.min(buf5/maxV,1), waterH=fillR*bH, waterY=bBot-waterH;
+  const thrR=Math.min(thr/maxV,1), thrY=bBot-thrR*bH;
+  svgEl.innerHTML=`
+    <defs>
+      <clipPath id="c${svgEl.id}"><rect x="${bx}" y="${bTop}" width="${bW}" height="${bH}" rx="3"/></clipPath>
+      <marker id="ai${svgEl.id}" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L0,5 L5,2.5z" fill="${color}"/></marker>
+      <marker id="ao${svgEl.id}" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L0,5 L5,2.5z" fill="#1D9E75"/></marker>
+    </defs>
+    <rect x="${bx}" y="${bTop}" width="${bW}" height="${bH}" rx="3" fill="#FFFFFF" stroke="#888" stroke-width="1"/>
+    <rect x="${bx}" y="${waterY}" width="${bW}" height="${waterH}" fill="${color}" opacity="0.28" clip-path="url(#c${svgEl.id})"/>
+    <line x1="${bx-5}" y1="${thrY}" x2="${bx+bW+5}" y2="${thrY}" stroke="${threshColor}" stroke-width="1.2" stroke-dasharray="4,3"/>
+    <text x="${bx+bW+7}" y="${thrY+4}" font-size="9" fill="${threshColor}" font-family="var(--font-sans)">${threshMB}MB</text>
+    <line x1="${bx+bW/2}" y1="16" x2="${bx+bW/2}" y2="${bTop-6}" stroke="${color}" stroke-width="2" marker-end="url(#ai${svgEl.id})"/>
+    <text x="${bx+bW/2}" y="12" font-size="10" fill="${color}" text-anchor="middle" font-family="var(--font-sans)">${iperf}Mbps</text>
+    <line x1="${bx+bW/2}" y1="${bBot+4}" x2="${bx+bW/2}" y2="${bBot+20}" stroke="#1D9E75" stroke-width="2" marker-end="url(#ao${svgEl.id})"/>
+    <text x="${bx+bW/2}" y="${bBot+40}" font-size="9" fill="#1D9E75" text-anchor="middle" font-family="var(--font-sans)">${drain}Mbps</text>    ${waterH>10?`<text x="${bx+bW/2}" y="${Math.max(waterY+12,bBot-5)}" font-size="9" fill="${color}" text-anchor="middle" font-family="var(--font-sans)">${(buf5/1e6).toFixed(1)}MB</text>`:''}
+  `;
+}
+
+function bufAt(iperf,drain,t){return Math.max(0,mb(Math.max(0,iperf-drain))*t)/1e6;}
+
+function draw(){
+  const i1=+document.getElementById('iperf1').value,
+        d1=+document.getElementById('drain1').value,
+        i2=+document.getElementById('iperf2').value,
+        d2=+document.getElementById('drain2').value,
+        th=+document.getElementById('thresh').value;
+
+  document.getElementById('iperf1-val').textContent=i1;
+  document.getElementById('drain1-val').textContent=d1;
+  document.getElementById('iperf2-val').textContent=i2;
+  document.getElementById('drain2-val').textContent=d2;
+  document.getElementById('thresh-val').textContent=th;
+
+  drawBucket(document.getElementById('svg1'),i1,d1,th,ue1Color);
+  drawBucket(document.getElementById('svg2'),i2,d2,th,ue2Color);
+
+  const n1=i1-d1, n2=i2-d2, thr=th*1e6;
+  const nb1=mb(Math.max(0,n1)), nb2=mb(Math.max(0,n2));
+  const n1El=document.getElementById('net1'), n2El=document.getElementById('net2');
+  n1El.textContent=(n1>0?'+':'')+n1+' Mbps'; n1El.style.color=n1>0?'var(--color-text-danger)':'var(--color-text-success)';
+  n2El.textContent=(n2>0?'+':'')+n2+' Mbps'; n2El.style.color=n2>0?'var(--color-text-danger)':'var(--color-text-success)';
+  document.getElementById('time1').textContent=nb1>0?(thr/nb1).toFixed(1)+'s':'Never';
+  document.getElementById('time2').textContent=nb2>0?(thr/nb2).toFixed(1)+'s':'Never';
+
+  const b1=bufAt(i1,d1,5)*1e6, b2=bufAt(i2,d2,5)*1e6;
+  const badge1=document.getElementById('badge1'), badge2=document.getElementById('badge2');
+  const exp=document.getElementById('mode-explain');
+
+  if(b1>=thr&&b2<thr){
+    badge1.textContent='HIGH → gets 53 PRBs'; badge1.className='mode-badge mode-active';
+    badge2.textContent='LOW → drops to 27 PRBs'; badge2.className='mode-badge mode-inactive';
+    exp.innerHTML='<span>Mode 1 active</span> — UE1 buffer crossed '+th+'MB. UE1: 25→53 PRBs. UE2: 55→27 PRBs.';
+  } else if(b2>=thr&&b1<thr){
+    badge1.textContent='LOW → drops to 12 PRBs'; badge1.className='mode-badge mode-inactive';
+    badge2.textContent='HIGH → gets 68 PRBs'; badge2.className='mode-badge mode-active';
+    exp.innerHTML='<span>Mode 2 active</span> — UE2 buffer crossed '+th+'MB. UE2: 55→68 PRBs. UE1: 25→12 PRBs.';
+  } else if(b1>=thr&&b2>=thr){
+    badge1.textContent='both high'; badge1.className='mode-badge mode-active';
+    badge2.textContent='both high'; badge2.className='mode-badge mode-active';
+    exp.innerHTML='<span>Both buffers high</span> — UE with larger buffer wins the extra PRBs.';
+  } else {
+    badge1.textContent='mode 0'; badge1.className='mode-badge mode-inactive';
+    badge2.textContent='mode 0'; badge2.className='mode-badge mode-inactive';
+    exp.innerHTML='<span>Mode 0 — inactive.</span> Neither buffer crosses '+th+'MB. UE1=25 PRBs, UE2=55 PRBs (default).';
+  }
+}
+
+['iperf1','drain1','iperf2','drain2','thresh'].forEach(id=>document.getElementById(id).addEventListener('input',draw));
+draw();
+</script>
