@@ -366,10 +366,8 @@ if (buf_ue1 > share_on_thr || buf_ue2 > share_on_thr) {
 | i | UE 2 | 55 | 39 Mbps |
 | ii | UE 1 | 55 | 29 Mbps |
 | ii | UE 2 | 25 | 12 Mbps |
-**Case i**
-<img width="1242" height="297" alt="image" src="https://github.com/user-attachments/assets/ad628f5f-afba-4c28-80e3-1d10ace0d2b6" />
-**Case ii**
-<img width="1237" height="290" alt="image" src="https://github.com/user-attachments/assets/cbdadf6a-c159-45d8-aa6c-b62220887936" />
+
+<img width="1239" height="653" alt="image" src="https://github.com/user-attachments/assets/89572737-d0e7-43c2-96fd-9f80beab87c9" />
 
 **With sharing active** (UE2 congested, mode 2 — UE1 donates half its PRBs):
 
@@ -378,8 +376,9 @@ if (buf_ue1 > share_on_thr || buf_ue2 > share_on_thr) {
 | UE 1 | 25 (baseline) | 15 Mbps |
 | UE 2 | 55 (baseline) | 29 Mbps |
 
-<img width="1235" height="312" alt="image" src="https://github.com/user-attachments/assets/820cb431-3d86-40ee-bb5b-61e9725f3000" />
-<img width="1242" height="302" alt="image" src="https://github.com/user-attachments/assets/c216d648-022d-4a34-9ce4-51ca30c589fd" />
+<img width="1246" height="342" alt="image" src="https://github.com/user-attachments/assets/d075303f-e5c7-47b4-80b8-008ad7d5af59" />
+<img width="1245" height="312" alt="image" src="https://github.com/user-attachments/assets/1686132b-e468-491f-b099-d6a708a7fa44" />
+
 
 PRB reallocation math for this case: `ue1_keep = floor(25/2) = 12` → UE1 gets 12
 PRBs, UE2 gets `80 − 12 = 68` PRBs. UE2's effective throughput share grew as its
