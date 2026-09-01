@@ -88,7 +88,7 @@ Tested configurations, each with a corresponding speedtest measurement:
 10. MCS = 28, PRBs = 106
 
 Example: **gNB log**
-<img width="1340" height="204" alt="image" src="https://github.com/user-attachments/assets/ed490f82-9823-450e-947a-298760e2579e" />
+<img width="1329" height="232" alt="image" src="https://github.com/user-attachments/assets/801b06b4-cec4-4bdb-9a61-8d733fc43052" />
 
 
 **Conclusion**: downlink performance does not always improve with higher MCS or PRB
